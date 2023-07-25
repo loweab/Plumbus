@@ -9,6 +9,7 @@ import androidx.databinding.DataBindingUtil
 import com.example.plumbus.databinding.ActivityMainBinding
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import com.squareup.picasso.Picasso
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -33,7 +34,7 @@ class MainActivity : AppCompatActivity() {
 
         val rickAndMortyService: RickAndMortyService = retrofit.create(RickAndMortyService::class.java)
 
-        rickAndMortyService.getCharacterById(244).enqueue(object : Callback<GetCharacterByIdResponse>{
+        rickAndMortyService.getCharacterById(54).enqueue(object : Callback<GetCharacterByIdResponse>{
             override fun onResponse(call: Call<GetCharacterByIdResponse>, response: Response<GetCharacterByIdResponse>) {
                 Log.i(TAG, response.toString())
                 
@@ -43,9 +44,23 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 val body = response.body()!!
-                val name = body.name
 
-                binding.textView.text = name
+                binding.apply {
+                    nameTextView.text = body.name
+                    aliveTextView.text = body.status
+                    speciesTextView.text = body.species
+                    originTextView.text = body.origin.name
+
+                    Picasso.get().load(body.image).into(headerImageView)
+
+                    when{
+                        body.gender.equals("male", ignoreCase = true) ->
+                            genderImageView.setImageResource(R.drawable.ic_male_24)
+                        body.gender.equals("female", ignoreCase = true) ->
+                            genderImageView.setImageResource(R.drawable.ic_female_24)
+                        else -> genderImageView.setImageResource(R.drawable.ic_unknown_24)
+                    }
+                }
             }
 
             override fun onFailure(call: Call<GetCharacterByIdResponse>, t: Throwable) {
