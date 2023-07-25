@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.databinding.DataBindingUtil
+import androidx.lifecycle.ViewModelProvider
 import com.example.plumbus.databinding.ActivityMainBinding
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -21,51 +22,37 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding : ActivityMainBinding
 
+    val viewModel: SharedViewModel by lazy {
+        ViewModelProvider(this).get(SharedViewModel::class.java)
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
 
-        val moshi = Moshi.Builder().addLast(KotlinJsonAdapterFactory()).build()
+        viewModel.refreshCharacter(555)
 
-        val retrofit : Retrofit = Retrofit.Builder()
-            .baseUrl("https://rickandmortyapi.com/api/")
-            .addConverterFactory(MoshiConverterFactory.create(moshi))
-            .build()
-
-        val rickAndMortyService: RickAndMortyService = retrofit.create(RickAndMortyService::class.java)
-
-        rickAndMortyService.getCharacterById(54).enqueue(object : Callback<GetCharacterByIdResponse>{
-            override fun onResponse(call: Call<GetCharacterByIdResponse>, response: Response<GetCharacterByIdResponse>) {
-                Log.i(TAG, response.toString())
-                
-                if(!response.isSuccessful){
-                    Toast.makeText(this@MainActivity, "Unsucessful Network call", Toast.LENGTH_SHORT).show()
-                    return
-                }
-
-                val body = response.body()!!
-
-                binding.apply {
-                    nameTextView.text = body.name
-                    aliveTextView.text = body.status
-                    speciesTextView.text = body.species
-                    originTextView.text = body.origin.name
-
-                    Picasso.get().load(body.image).into(headerImageView)
-
-                    when{
-                        body.gender.equals("male", ignoreCase = true) ->
-                            genderImageView.setImageResource(R.drawable.ic_male_24)
-                        body.gender.equals("female", ignoreCase = true) ->
-                            genderImageView.setImageResource(R.drawable.ic_female_24)
-                        else -> genderImageView.setImageResource(R.drawable.ic_unknown_24)
-                    }
-                }
+        viewModel.characterByIdLiveData.observe(this){ response ->
+            if(response == null){
+                Toast.makeText(this@MainActivity, "Unsucessful Network call", Toast.LENGTH_SHORT).show()
+                return@observe
             }
 
-            override fun onFailure(call: Call<GetCharacterByIdResponse>, t: Throwable) {
-                Log.i(TAG, t.message ?: "null message")
+            binding.apply {
+                nameTextView.text = response.name
+                aliveTextView.text = response.status
+                speciesTextView.text = response.species
+                originTextView.text = response.origin.name
+
+                Picasso.get().load(response.image).into(headerImageView)
+
+                when{
+                    response.gender.equals("male", ignoreCase = true) ->
+                        genderImageView.setImageResource(R.drawable.ic_male_24)
+                    response.gender.equals("female", ignoreCase = true) ->
+                        genderImageView.setImageResource(R.drawable.ic_female_24)
+                    else -> genderImageView.setImageResource(R.drawable.ic_unknown_24)
+                }
             }
-        })
+        }
     }
 }
