@@ -1,5 +1,8 @@
 package com.example.plumbus
 
+import com.example.plumbus.network.NetworkLayer
+import com.example.plumbus.network.response.GetCharacterByIdResponse
+
 class SharedRepository {
 
     suspend fun getCharacterById(characterId: Int): GetCharacterByIdResponse?{

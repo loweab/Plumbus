@@ -25,34 +25,24 @@ class MainActivity : AppCompatActivity() {
     val viewModel: SharedViewModel by lazy {
         ViewModelProvider(this).get(SharedViewModel::class.java)
     }
+
+    private val epoxyController = CharacterDetailsEpoxyController()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
 
-        viewModel.refreshCharacter(555)
-
         viewModel.characterByIdLiveData.observe(this){ response ->
+
+            epoxyController.characterResponse = response
+
             if(response == null){
                 Toast.makeText(this@MainActivity, "Unsucessful Network call", Toast.LENGTH_SHORT).show()
                 return@observe
             }
-
-            binding.apply {
-                nameTextView.text = response.name
-                aliveTextView.text = response.status
-                speciesTextView.text = response.species
-                originTextView.text = response.origin.name
-
-                Picasso.get().load(response.image).into(headerImageView)
-
-                when{
-                    response.gender.equals("male", ignoreCase = true) ->
-                        genderImageView.setImageResource(R.drawable.ic_male_24)
-                    response.gender.equals("female", ignoreCase = true) ->
-                        genderImageView.setImageResource(R.drawable.ic_female_24)
-                    else -> genderImageView.setImageResource(R.drawable.ic_unknown_24)
-                }
-            }
         }
+
+        viewModel.refreshCharacter(54)
+
+        binding.epoxyRecyclerView.setControllerAndBuildModels(epoxyController)
     }
 }

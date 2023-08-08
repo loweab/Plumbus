@@ -1,4 +1,4 @@
-package com.example.plumbus
+package com.example.plumbus.network.response
 
 data class GetCharacterByIdResponse(
     val created: String = "",
